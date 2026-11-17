@@ -8,14 +8,16 @@
 
 BarberSync propone gestionar reservas sin solapar las citas confirmadas de un mismo barbero. Este documento describe una arquitectura por implementar; no acredita código funcionando ni pruebas aprobadas.
 
-En la revisión del repositorio, `outcomes.md`, `requirements.md`, `business-rules.md` y `acceptance-criteria.md` todavía estaban vacíos. Esta propuesta deberá contrastarse con esos documentos y con la guía original del profesor antes de aprobar el diseño. La aprobación del Issue #1 sigue pendiente.
+En la revisión inicial, ODD estaba pendiente. Al retomar el 17 de noviembre, `main` avanzó a `6316a22`: Amir publicó `outcomes.md` para Tavo BarberShop y añadió su registro de IA. El documento plantea evitar dobles reservas, consulta de disponibilidad, reserva autónoma 24/7 y confirmación inmediata. El Issue #1 sigue abierto, sin revisiones publicadas al momento de esta consulta; `requirements.md`, `business-rules.md` y `acceptance-criteria.md` todavía están vacíos.
+
+La guía exige comenzar por ODD y después convertir sus resultados en SDD. Esta actualización relaciona la propuesta con el outcome publicado, pendiente de revisión del equipo. El PR #3 continúa en borrador. No se ha implementado el sistema ni demostrado disponibilidad real 24/7.
 
 ### Supuestos por validar
 
 | ID | Propuesta provisional | Validación pendiente |
 |---|---|---|
-| A01 | Primera demostración mediante API y documentación interactiva. | Confirmar con Product si el entregable exige también interfaz web para clientes y barberos. |
-| A02 | Python, FastAPI y SQLite para una aplicación local de alcance académico. | Confirmar tecnologías permitidas en la guía y acuerdo del equipo. |
+| A01 | Interfaz web sencilla para que el cliente consulte, reserve y reciba confirmación, más `/docs` para revisión técnica. | La guía no prescribe una interfaz web; esta propuesta responde a la autonomía del cliente descrita en ODD. Product debe validar las pantallas y el alcance del barbero. |
+| A02 | Python, FastAPI y SQLite para una aplicación local de alcance académico. | La libertad de lenguaje, base de datos y stack está confirmada en la guía, p. 3, punto 10. Falta ratificar esta elección con el equipo. |
 | A03 | Una barbería; horario común de lunes a sábado, de 09:00 a 18:00. | Product debe incorporarlo o corregirlo en las reglas de negocio. |
 | A04 | Zona `America/Panama`; comienzos cada 5 minutos; duración según servicio. | Validar calendario y duración con Product y QA. |
 | A05 | Datos ficticios; teléfono panameño como clave de cliente; sin autenticación en la demo local. | No confundir identificación con autenticación. Acordar controles e interfaz antes de publicar para usuarios reales. |
@@ -26,18 +28,20 @@ En la revisión del repositorio, `outcomes.md`, `requirements.md`, `business-rul
 | Componente | Tecnología | Motivo |
 |---|---|---|
 | Lenguaje | Python 3.11 o superior | Compatible con el diseño inicial y las herramientas de prueba propuestas. |
+| Interfaz de cliente | HTML, CSS y JavaScript | Permitir la reserva autónoma mediante las operaciones de la API, sin exigir herramientas técnicas al cliente. |
 | API | FastAPI, Pydantic y Uvicorn | Contratos de entrada/salida y documentación en `/docs`. |
 | Persistencia | SQLite en un archivo local | Instalación sencilla y transacciones suficientes para la demo. |
 | Acceso a datos | SQLAlchemy 2.x, API síncrona | Modelos y una unidad de trabajo por operación. |
 | Pruebas | pytest y TestClient de FastAPI, con httpx | Pruebas de reglas, API y persistencia. |
 | Colaboración | Git y GitHub | Issues, ramas, commits, PR y revisión por otro integrante. |
 
-Antes de implementar se fijarán versiones compatibles en el archivo de dependencias. SQLite es una propuesta, no un requisito verificado del profesor. La alternativa Node.js + Express requeriría revisar dependencias, estructura, transacciones y pruebas; no basta con cambiar el nombre del stack.
+Antes de implementar se fijarán versiones compatibles en el archivo de dependencias. La guía permite cualquier lenguaje, base de datos y stack, siempre que se documenten aquí: SQLite es una elección permitida, no una exigencia del profesor. La alternativa Node.js + Express requeriría revisar dependencias, estructura, transacciones y pruebas; no basta con cambiar el nombre del stack.
 
 ## 3. Capas y responsabilidades
 
 | Capa | Responsabilidad | Dependencia |
 |---|---|---|
+| Interfaz de cliente | Elegir barbero, servicio, fecha y horario; enviar datos y mostrar confirmación o error. | API; sin duplicar la autoridad de las reglas de negocio. |
 | Routers y schemas | Recibir HTTP, validar estructura y traducir resultados a respuestas. | Servicios. |
 | Servicios | Aplicar reglas de reserva, horario, cliente y cancelación. | Unidad de trabajo y repositorios. |
 | Repositorios y modelos | Consultar y persistir datos con la conexión recibida. | SQLite mediante SQLAlchemy. |
@@ -49,6 +53,7 @@ Los servicios controlan la transacción completa. Un repositorio no realiza comm
 | Ruta | Contenido por implementar |
 |---|---|
 | `src/barbersync/main.py` | Aplicación y registro de routers. |
+| `src/barbersync/web/` | Interfaz web propuesta para consultar y reservar; su entrega se configurará en la aplicación. |
 | `src/barbersync/config.py` | Archivo SQLite, zona horaria, calendario y tiempo de espera. |
 | `src/barbersync/database.py` | Conexiones, sesiones, claves foráneas y unidad de trabajo. |
 | `src/barbersync/models/` | Entidades de `data-model.md`. |
@@ -97,6 +102,15 @@ Cancelar una cita usará también una transacción de escritura. Una futura oper
 - Disponibilidad filtra citas confirmadas y considera la duración solicitada. Consultarla no retiene el horario: crear una cita vuelve a comprobarlo dentro de la transacción.
 - En la base inicial no hay almuerzos, permisos ni bloqueos extraordinarios implementados.
 
+### Relación con el outcome publicado
+
+| Resultado planteado en ODD | Traducción técnica propuesta | Cómo se verificará |
+|---|---|---|
+| Cero conflictos de doble reserva. | Regla de solapamiento, transacción e integridad de datos. | Cero pares de citas confirmadas superpuestas aceptadas en la matriz de pruebas acordada, incluida concurrencia. No se presenta como garantía estadística de operación real. |
+| Reservar sin intervención del barbero. | Recorrido de cliente: consultar, elegir, enviar datos y recibir confirmación. | Un usuario de demostración completa el recorrido desde la interfaz sin que el barbero cree la cita manualmente. |
+| Confirmación inmediata. | Responder éxito después del commit y mostrar identificador/fecha de cita. | La pantalla de confirmación corresponde a una cita realmente persistida. El tiempo objetivo aún debe acordarse. |
+| Agenda accesible 24/7. | Permitir solicitudes a cualquier hora para citas dentro de la jornada válida. | Separar horario de acceso al sistema y horario de atención. La disponibilidad continua depende del despliegue; una demo local apagada no la demuestra. |
+
 ## 6. Verificación prevista con QA
 
 Las siguientes son pruebas propuestas, todavía no ejecutadas contra BarberSync:
@@ -113,12 +127,16 @@ Para concurrencia se usará un archivo SQLite temporal y conexiones independient
 
 El borrador original ya anticipaba `blocked_slots` y el almuerzo; por tanto, ese ejemplo es conocido por el equipo. Se deja fuera del contrato base para implementar primero una versión verificable.
 
-Cuando llegue un cambio real, registrar la solicitud en un Issue, conservar el commit y las pruebas de la base, actualizar especificaciones, código y pruebas en otra rama y revisar mediante PR. Si se utiliza el almuerzo como ejercicio, identificarlo como cambio simulado previamente conocido; validar con la guía si eso satisface la actividad.
+La guía exige introducir el cambio **a mitad del desarrollo** (p. 3, punto 13). Debe existir antes una base funcional parcial con pruebas, y quedar trabajo de implementación por completar después. El ciclo incluirá solicitud, especificaciones, criterios de aceptación, plan/tareas, código, pruebas y resultados. El detalle y la rotación propuesta de roles están en [implementation-plan.md](implementation-plan.md).
 
-## 8. Fuentes técnicas consultadas
+El almuerzo ya era conocido. Conviene que el requisito del hito lo plantee Product, el profesor o el escenario de usuario después de revisar la base; no debe narrarse como inesperado algo que ya se decidió implementar. Si se utiliza una simulación conocida, explicitarlo y confirmar su aceptación con el profesor.
+
+## 8. Referencia académica y fuentes técnicas
 
 - [SQLite: transacciones](https://www.sqlite.org/lang_transaction.html).
 - [SQLAlchemy: SQLite, transacciones y conexiones](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html).
 - [SQLite: claves foráneas](https://www.sqlite.org/foreignkeys.html).
 
-Estas fuentes respaldan mecanismos técnicos; no acreditan requisitos de la asignatura ni aprobación del equipo.
+Referencia académica leída: `DSaIA-Proyecto2.pdf`, Proyecto #2 de Tópicos Especiales II, profesor Regis Rivera, pp. 1–3. Confirma libertad tecnológica, rotación de roles, ODD antes de SDD, pruebas obligatorias y cambio a mitad del desarrollo. La estructura de archivos se presenta como recomendada.
+
+La guía remite además al Laboratorio 13 y al material compartido para SDD; esos materiales complementarios no se han revisado en esta sesión. Las fuentes técnicas anteriores respaldan mecanismos, no una aprobación del equipo.
