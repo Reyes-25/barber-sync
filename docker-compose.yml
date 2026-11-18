@@ -4,7 +4,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./barber_sync.db
-      - CANCELATION_THRESHOLD_HOURS=2
+      - DATABASE_URL=sqlite:///./data/barbersync.db
     volumes:
       - ./data:/app/data
