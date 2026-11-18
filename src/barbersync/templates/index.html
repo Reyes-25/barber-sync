@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Reservar cita — BarberSync{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h1>Reserva tu cita</h1>
+  <p>Consulta disponibilidad en tiempo real y agenda sin cruces de horarios ({{ timezone }}).</p>
+</section>
+
+<section class="card">
+  <form id="booking-form">
+    <label>
+      Nombre
+      <input type="text" name="customer_name" required>
+    </label>
+    <label>
+      Teléfono
+      <input type="tel" name="customer_phone" placeholder="6000-0000" required>
+    </label>
+    <label>
+      Barbero
+      <select name="barber_id" id="barber-select" required>
+        <option value="" disabled selected>Selecciona un barbero</option>
+        {% for barber in barbers %}
+        <option value="{{ barber.id }}">{{ barber.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Servicio
+      <select name="service_id" id="service-select" required>
+        <option value="" disabled selected>Selecciona un servicio</option>
+        {% for service in services %}
+        <option value="{{ service.id }}" data-duration="{{ service.duration_minutes }}">
+          {{ service.name }} — {{ service.duration_minutes }} min — ${{ "%.2f"|format(service.price_cents / 100) }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Fecha
+      <input type="date" name="date" id="date-input" value="{{ default_date }}" required>
+    </label>
+    <button type="button" id="load-slots">Ver disponibilidad</button>
+    <label>
+      Horario disponible
+      <select name="start_time" id="slots-select" required disabled>
+        <option value="">Primero selecciona fecha y servicio</option>
+      </select>
+    </label>
+    <button type="submit">Reservar</button>
+  </form>
+  <div id="message" role="status"></div>
+</section>
+
+<script>
+  const form = document.getElementById('booking-form');
+  const loadBtn = document.getElementById('load-slots');
+  const slotsSelect = document.getElementById('slots-select');
+  const message = document.getElementById('message');
+
+  loadBtn.addEventListener('click', async () => {
+    const barberId = document.getElementById('barber-select').value;
+    const serviceId = document.getElementById('service-select').value;
+    const date = document.getElementById('date-input').value;
+    if (!barberId || !serviceId || !date) {
+      message.textContent = 'Selecciona barbero, servicio y fecha.';
+      return;
+    }
+    const res = await fetch(`/api/v1/barbers/${barberId}/availability?service_id=${serviceId}&date=${date}`);
+    const data = await res.json();
+    slotsSelect.innerHTML = '';
+    if (!res.ok || data.slots.length === 0) {
+      slotsSelect.disabled = true;
+      slotsSelect.innerHTML = '<option value="">No hay disponibilidad</option>';
+      message.textContent = data.detail || 'No hay horarios disponibles para esa fecha.';
+      return;
+    }
+    data.slots.forEach(slot => {
+      const option = document.createElement('option');
+      const timeStr = `${date}T${slot}:00-05:00`;
+      option.value = timeStr;
+      option.textContent = slot;
+      slotsSelect.appendChild(option);
+    });
+    slotsSelect.disabled = false;
+    message.textContent = '';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const payload = {
+      barber_id: parseInt(formData.get('barber_id')),
+      service_id: parseInt(formData.get('service_id')),
+      start_time: formData.get('start_time'),
+      customer: {
+        name: formData.get('customer_name'),
+        phone: formData.get('customer_phone')
+      }
+    };
+    const res = await fetch('/api/v1/appointments', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      message.textContent = `¡Cita reservada! ID ${data.id} — ${data.start_time}`;
+      form.reset();
+      document.getElementById('date-input').value = '{{ default_date }}';
+      slotsSelect.innerHTML = '<option value="">Primero selecciona fecha y servicio</option>';
+      slotsSelect.disabled = true;
+    } else {
+      message.textContent = data.detail || 'Error al reservar.';
+    }
+  });
+</script>
+{% endblock %}

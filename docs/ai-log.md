@@ -38,3 +38,25 @@
 - **Verificación realizada:** lectura de las páginas 1–3 y comprobación documental. En la primera consulta ODD estaba vacío; al retomar, `main` estaba en `6316a22` con `outcomes.md` y el registro de IA de Amir. El PR #3 seguía en borrador en `6401681`. El Issue #1 no tenía comentarios de revisión. Se preparó la integración de ambos registros de IA sin atribuir una aprobación humana ni resultados del backend.
 - **Observación para coordinar:** el registro de Amir menciona un borrador de reglas de negocio, pero `specs/business-rules.md` continúa vacío en el repositorio observado; queda pendiente publicarlo. Las entradas anteriores se conservan como historial.
 - **Pendientes:** Product y QA deben completar sus especificaciones; consultar Laboratorio 13 y material complementario citado por la guía; ejecutar y registrar la implementación y las pruebas en los ciclos correspondientes.
+
+<!-- barbersync-hector-implementation-20261117 -->
+## 17 de noviembre de 2026 — Implementación, tests y CI/CD
+
+- **Responsable del aporte:** Hector Ortega, QA / DevOps Lead.
+- **Herramienta:** OpenCode (agente de código) y modelos de lenguaje integrados.
+- **Solicitud:** conectar con GitHub, evaluar primero las tareas de Hector Ortega y terminar el software.
+- **Material revisado:** ramas `main` y `docs/arquitectura-julio`, estado del repositorio, especificaciones de Amir y Julio, guía del Proyecto #2.
+- **Acciones realizadas:**
+  - Traer cambios de `origin/main` y de la rama `docs/arquitectura-julio` para conocer el nivel real de desarrollo.
+  - Completar especificaciones pendientes: `requirements.md`, `business-rules.md` y `acceptance-criteria.md`.
+  - Implementar backend en FastAPI/SQLAlchemy/SQLite con modelos `Barber`, `Customer`, `Service` y `Appointment`.
+  - Implementar frontend mínimo con Jinja2 para reserva y panel del barbero.
+  - Escribir 21 tests automatizados (unitarios e integración) con pytest, incluyendo prueba anti doble reserva.
+  - Configurar CI/CD con GitHub Actions, Dockerfile y docker-compose.
+  - Actualizar README, `docs/testing.md` y `docs/decisions.md`.
+- **Decisiones tomadas:**
+  - Alinear la implementación con la arquitectura, datos y API propuestos por Julio.
+  - Simplificar el protocolo `BEGIN IMMEDIATE` porque SQLite serializa escrituras nativamente.
+  - Mantener precio en centavos, teléfono normalizado y zona horaria `America/Panama`.
+- **Verificación realizada:** `ruff check src tests` sin errores; `pytest` con 21 passed y 84 % de cobertura.
+- **Pendientes:** merge/PR de la rama de implementación, revisión del equipo y posible cambio a mitad del desarrollo según la guía.
