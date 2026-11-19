@@ -13,6 +13,7 @@ from barbersync.config import (
     WORK_DAYS,
 )
 from barbersync.database import SessionLocal
+from barbersync.exceptions import ConflictError
 from barbersync.models import Appointment, Barber, Customer, Service
 
 PANAMA = ZoneInfo(TIMEZONE)
@@ -252,7 +253,7 @@ def create_appointment(data: dict) -> Appointment:
             .first()
         )
         if overlapping:
-            raise ValueError("El horario ya está reservado para este barbero")
+            raise ConflictError("El horario ya está reservado para este barbero")
 
         customer = _find_or_create_customer(
             db, customer_in["name"], customer_in["phone"]
@@ -260,7 +261,7 @@ def create_appointment(data: dict) -> Appointment:
 
         active_count = count_active_appointments(db, customer.id, start_panama.date())
         if active_count >= MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER_PER_DAY:
-            raise ValueError(
+            raise ConflictError(
                 "El cliente ya tiene una reserva activa para este día"
             )
 

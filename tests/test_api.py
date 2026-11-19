@@ -93,7 +93,7 @@ def test_double_booking_rejected(client):
             "customer": {"name": "B", "phone": "6222-2222"},
         },
     )
-    assert second.status_code == 422
+    assert second.status_code == 409
 
 
 def test_partial_overlap_rejected(client):
@@ -121,7 +121,7 @@ def test_partial_overlap_rejected(client):
             "customer": {"name": "B", "phone": "6444-4444"},
         },
     )
-    assert second.status_code == 422
+    assert second.status_code == 409
 
 
 def test_adjacent_appointments_allowed(client):
@@ -261,7 +261,7 @@ def test_active_appointment_limit(client):
             "customer": {"name": "Límite", "phone": "7000-0000"},
         },
     )
-    assert res.status_code == 422
+    assert res.status_code == 409
     assert "reserva activa" in res.json()["detail"].lower()
 
 

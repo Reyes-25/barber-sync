@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from barbersync import services
 from barbersync.config import MAX_PAGE_LIMIT
 from barbersync.database import get_db
+from barbersync.exceptions import ConflictError
 from barbersync.models import Appointment
 from barbersync.schemas import (
     AppointmentCreate,
@@ -69,6 +70,8 @@ def create_appointment(payload: AppointmentCreate):
     try:
         appointment = services.create_appointment(payload.model_dump())
         return _to_appointment_out(appointment)
+    except ConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
