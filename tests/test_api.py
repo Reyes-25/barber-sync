@@ -238,22 +238,7 @@ def test_get_appointment_not_found(client):
 
 def test_active_appointment_limit(client):
     monday = _next_weekday(0)
-    base = datetime(monday.year, monday.month, monday.day, 9, 0, tzinfo=PANAMA)
-    for i in range(3):  # MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER default
-        start = base + timedelta(minutes=i * 30)
-        res = client.post(
-            "/api/v1/appointments",
-            json={
-                "barber_id": 1,
-                "service_id": 1,
-                "start_time": start.isoformat(),
-                "customer": {"name": "Límite", "phone": "7000-0000"},
-            },
-        )
-        assert res.status_code == 201, res.text
-
-    # Fourth active appointment for the same customer must be rejected.
-    start = base + timedelta(minutes=4 * 30)
+    start = datetime(monday.year, monday.month, monday.day, 9, 0, tzinfo=PANAMA)
     res = client.post(
         "/api/v1/appointments",
         json={
@@ -263,8 +248,21 @@ def test_active_appointment_limit(client):
             "customer": {"name": "Límite", "phone": "7000-0000"},
         },
     )
+    assert res.status_code == 201, res.text
+
+    # Second active appointment for the same customer on the same day is rejected.
+    second_start = datetime(monday.year, monday.month, monday.day, 10, 0, tzinfo=PANAMA)
+    res = client.post(
+        "/api/v1/appointments",
+        json={
+            "barber_id": 1,
+            "service_id": 1,
+            "start_time": second_start.isoformat(),
+            "customer": {"name": "Límite", "phone": "7000-0000"},
+        },
+    )
     assert res.status_code == 422
-    assert "límite" in res.json()["detail"].lower()
+    assert "reserva activa" in res.json()["detail"].lower()
 
 
 def test_concurrent_double_booking(seeded_db):

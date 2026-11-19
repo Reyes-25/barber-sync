@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from barbersync.config import (
     CLOSE_TIME,
-    MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER,
+    MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER_PER_DAY,
     OPEN_TIME,
     SLOT_MINUTES,
     TIMEZONE,
@@ -109,12 +109,16 @@ def get_customer_by_phone(db: Session, phone: str) -> Customer | None:
     return db.query(Customer).filter(Customer.phone == phone).first()
 
 
-def count_active_appointments(db: Session, customer_id: int) -> int:
+def count_active_appointments(db: Session, customer_id: int, for_date: date) -> int:
+    start = _to_canonical_utc(_start_of_day_in_panama(for_date))
+    end = _to_canonical_utc(_end_of_day_in_panama(for_date))
     return (
         db.query(Appointment)
         .filter(
             Appointment.customer_id == customer_id,
             Appointment.status == "confirmed",
+            Appointment.start_time >= start,
+            Appointment.start_time < end,
         )
         .count()
     )
@@ -254,11 +258,10 @@ def create_appointment(data: dict) -> Appointment:
             db, customer_in["name"], customer_in["phone"]
         )
 
-        active_count = count_active_appointments(db, customer.id)
-        if active_count >= MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER:
+        active_count = count_active_appointments(db, customer.id, start_panama.date())
+        if active_count >= MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER_PER_DAY:
             raise ValueError(
-                f"El cliente alcanzó el límite de "
-                f"{MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER} reservas activas"
+                "El cliente ya tiene una reserva activa para este día"
             )
 
         appointment = Appointment(
