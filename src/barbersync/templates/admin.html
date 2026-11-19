@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Barbero — BarberSync{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h1>Panel del barbero</h1>
+  <p>Gestiona las citas confirmadas y canceladas.</p>
+</section>
+
+<section class="card">
+  {% if appointments %}
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Barbero</th>
+        <th>Cliente</th>
+        <th>Teléfono</th>
+        <th>Servicio</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in appointments %}
+      <tr>
+        <td>{{ a.id }}</td>
+        <td>{{ a.barber_name }}</td>
+        <td>{{ a.customer_name }}</td>
+        <td>{{ a.customer_phone }}</td>
+        <td>{{ a.service_name }}</td>
+        <td>{{ a.start_time }}</td>
+        <td>{{ a.end_time }}</td>
+        <td><span class="status {{ a.status }}">{{ a.status }}</span></td>
+        <td>
+          {% if a.status != 'cancelled' %}
+          <button onclick="cancelAppointment({{ a.id }})">Cancelar</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No hay citas registradas.</p>
+  {% endif %}
+  <div id="message" role="status"></div>
+</section>
+
+<script>
+  async function cancelAppointment(id) {
+    const res = await fetch(`/api/v1/appointments/${id}/cancel`, {method: 'PATCH'});
+    const data = await res.json();
+    const msg = document.getElementById('message');
+    if (res.ok) {
+      msg.textContent = `Cita ${id} cancelada`;
+      setTimeout(() => location.reload(), 600);
+    } else {
+      msg.textContent = data.detail || 'Error al cancelar.';
+    }
+  }
+</script>
+{% endblock %}

@@ -11,17 +11,50 @@ Este proyecto aplica el enfoque de **Desarrollo Orientado por Especificaciones y
 *   **[Hector Ortega]** — QA / DevOps Lead
 
 ## 🛠️ Stack Tecnológico
-*   *Por definir en `specs/architecture.md`*
+*   Python 3.11+
+*   FastAPI + SQLAlchemy 2.0
+*   SQLite
+*   Jinja2 + HTML/CSS/JavaScript
+*   pytest + pytest-cov
+*   Docker + Docker Compose
+*   GitHub Actions
 
 ## 📂 Estructura del Proyecto
 *   `specs/`: Especificaciones del proyecto (ODD y SDD).
 *   `docs/`: Documentación de uso de IA, decisiones y testing.
-*   `src/`: Código fuente de la aplicación.
+*   `src/barbersync/`: Código fuente de la aplicación.
 *   `tests/`: Pruebas automatizadas.
+*   `.github/workflows/`: CI/CD.
 
 ## 🚀 Estado del Proyecto
 *   [x] Fase 0: Setup inicial y estructura.
-*   [ ] Fase 1: ODD (Definición de Problema y Outcome).
-*   [ ] Fase 2: SDD (Especificaciones y Criterios de Aceptación).
-*   [ ] Fase 3: Desarrollo e Implementación.
-*   [ ] Fase 4: Pruebas y Despliegue.
+*   [x] Fase 1: ODD (Definición de Problema y Outcome).
+*   [x] Fase 2: SDD (Especificaciones y Criterios de Aceptación).
+*   [x] Fase 3: Desarrollo e Implementación.
+*   [x] Fase 4: Pruebas y Despliegue.
+
+## ⚡ Ejecución local
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn barbersync.main:app --app-dir src --reload
+```
+
+La aplicación estará disponible en `http://localhost:8000`.
+
+## 🧪 Tests
+```bash
+pytest
+```
+
+Resultados actuales: 21 tests passed, cobertura ≥ 80 %.
+
+## 🐳 Docker
+```bash
+docker-compose up --build
+```
+
+## 📋 Documentación de API
+Con la app en ejecución visita `http://localhost:8000/docs`.
