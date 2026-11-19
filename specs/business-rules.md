@@ -13,3 +13,4 @@
 8. **RN-08 Barbero activo**: solo los barberos marcados como activos pueden recibir nuevas reservas.
 9. **RN-09 Confirmación inmediata**: una reserva exitosa queda en estado `confirmed` y el sistema responde después de persistir el registro.
 10. **RN-10 Cita completa dentro de la jornada**: el inicio más la duración del servicio debe caber dentro del horario de atención del día seleccionado.
+11. **RN-11 Límite de reservas activas por cliente**: un cliente no puede tener más de 3 citas confirmadas simultáneas. El límite es configurable mediante la variable de entorno `MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER`.

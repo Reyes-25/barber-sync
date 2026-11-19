@@ -30,14 +30,14 @@ pytest
 ```
 
 ## Resultados registrados
-- **Fecha:** 17 de noviembre de 2026.
+- **Fecha:** 18 de noviembre de 2026.
 - **Commit:** (ver rama `feature/full-implementation`).
-- **Tests:** 21 passed.
-- **Cobertura:** 84 %.
+- **Tests:** 23 passed.
+- **Cobertura:** ≥ 84 %.
 - **Lint:** `ruff check src tests` sin errores.
 
 ## CI/CD
 - GitHub Actions ejecuta lint + tests en cada push/PR a `main`.
 
 ## Nota sobre concurrencia
-La propuesta de `BEGIN IMMEDIATE` de la arquitectura se simplificó: SQLite serializa las escrituras de forma nativa y, para la demo académica, la validación de solapamiento dentro de una transacción normal es suficiente. Si el equipo decide reforzar la concurrencia, se retomará el protocolo transaccional explícito.
+El engine de SQLite se configura con `BEGIN IMMEDIATE` para que la validación de solapamiento y la inserción de la cita ocurran dentro de la misma transacción serializada. Se incluye una prueba concurrente que verifica que dos solicitudes simultáneas para el mismo barbero y horario dejen exactamente una cita confirmada.

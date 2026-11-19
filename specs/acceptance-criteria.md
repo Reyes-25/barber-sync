@@ -43,7 +43,12 @@
 **cuando** existen citas,
 **entonces** puede ver el listado completo con estado y detalles.
 
-## CA-09 Tests automatizados
+## CA-09 Límite de reservas activas
+**Dado** un cliente que ya alcanzó el límite de reservas activas configurado,
+**cuando** intenta reservar una cita adicional,
+**entonces** el sistema responde 422 y no crea la nueva cita.
+
+## CA-10 Tests automatizados
 **Dado** el pipeline de CI/CD,
 **cuando** se ejecuta `pytest`,
-**entonces** todos los tests pasan, incluyendo la prueba automatizada de rechazo de doble reserva, y la cobertura es ≥ 80 %.
+**entonces** todos los tests pasan, incluyendo las pruebas automatizadas de rechazo de doble reserva y concurrencia, y la cobertura es ≥ 80 %.

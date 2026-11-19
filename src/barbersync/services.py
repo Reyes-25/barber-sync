@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from barbersync.config import (
     CLOSE_TIME,
+    MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER,
     OPEN_TIME,
     SLOT_MINUTES,
     TIMEZONE,
@@ -106,6 +107,17 @@ def get_service(db: Session, service_id: int) -> Service | None:
 
 def get_customer_by_phone(db: Session, phone: str) -> Customer | None:
     return db.query(Customer).filter(Customer.phone == phone).first()
+
+
+def count_active_appointments(db: Session, customer_id: int) -> int:
+    return (
+        db.query(Appointment)
+        .filter(
+            Appointment.customer_id == customer_id,
+            Appointment.status == "confirmed",
+        )
+        .count()
+    )
 
 
 def list_barbers(db: Session) -> list[Barber]:
@@ -241,6 +253,13 @@ def create_appointment(data: dict) -> Appointment:
         customer = _find_or_create_customer(
             db, customer_in["name"], customer_in["phone"]
         )
+
+        active_count = count_active_appointments(db, customer.id)
+        if active_count >= MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER:
+            raise ValueError(
+                f"El cliente alcanzó el límite de "
+                f"{MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER} reservas activas"
+            )
 
         appointment = Appointment(
             barber_id=barber_id,

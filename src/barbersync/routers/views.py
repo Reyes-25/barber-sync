@@ -26,9 +26,9 @@ def index(request: Request, db: Session = Depends(get_db)):
     services_list = services.list_services(db)
     default_date = _default_date()
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "barbers": barbers,
             "services": services_list,
             "default_date": default_date.isoformat(),
@@ -55,5 +55,7 @@ def admin(request: Request, db: Session = Depends(get_db)):
             }
         )
     return templates.TemplateResponse(
-        "admin.html", {"request": request, "appointments": enriched}
+        request,
+        "admin.html",
+        {"appointments": enriched},
     )

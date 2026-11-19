@@ -1,3 +1,6 @@
+import concurrent.futures
+import random
+import time
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -231,3 +234,86 @@ def test_naive_datetime_rejected(client):
 def test_get_appointment_not_found(client):
     res = client.get("/api/v1/appointments/9999")
     assert res.status_code == 404
+
+
+def test_active_appointment_limit(client):
+    monday = _next_weekday(0)
+    base = datetime(monday.year, monday.month, monday.day, 9, 0, tzinfo=PANAMA)
+    for i in range(3):  # MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER default
+        start = base + timedelta(minutes=i * 30)
+        res = client.post(
+            "/api/v1/appointments",
+            json={
+                "barber_id": 1,
+                "service_id": 1,
+                "start_time": start.isoformat(),
+                "customer": {"name": "Límite", "phone": "7000-0000"},
+            },
+        )
+        assert res.status_code == 201, res.text
+
+    # Fourth active appointment for the same customer must be rejected.
+    start = base + timedelta(minutes=4 * 30)
+    res = client.post(
+        "/api/v1/appointments",
+        json={
+            "barber_id": 1,
+            "service_id": 1,
+            "start_time": start.isoformat(),
+            "customer": {"name": "Límite", "phone": "7000-0000"},
+        },
+    )
+    assert res.status_code == 422
+    assert "límite" in res.json()["detail"].lower()
+
+
+def test_concurrent_double_booking(seeded_db):
+    monday = _next_weekday(0)
+    start = datetime(monday.year, monday.month, monday.day, 10, 0, tzinfo=PANAMA)
+    payloads = [
+        {
+            "barber_id": 1,
+            "service_id": 1,
+            "start_time": start,
+            "customer": {"name": "Concurrente A", "phone": "7111-1111"},
+        },
+        {
+            "barber_id": 1,
+            "service_id": 1,
+            "start_time": start,
+            "customer": {"name": "Concurrente B", "phone": "7222-2222"},
+        },
+    ]
+
+    results = []
+    exceptions = []
+
+    def attempt(payload, idx):
+        # Jitter to increase the chance of both threads entering together.
+        time.sleep(random.uniform(0, 0.01))
+        try:
+            appointment = services.create_appointment(payload)
+            results.append((idx, appointment))
+        except Exception as exc:  # noqa: BLE001
+            exceptions.append((idx, exc))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(attempt, p, i) for i, p in enumerate(payloads)]
+        concurrent.futures.wait(futures)
+
+    assert len(results) == 1, f"Expected one success, got {len(results)}"
+    assert len(exceptions) == 1, f"Expected one failure, got {len(exceptions)}"
+
+    db = services.SessionLocal()
+    try:
+        confirmed = (
+            db.query(services.Appointment)
+            .filter(
+                services.Appointment.barber_id == 1,
+                services.Appointment.status == "confirmed",
+            )
+            .all()
+        )
+        assert len(confirmed) == 1
+    finally:
+        db.close()
