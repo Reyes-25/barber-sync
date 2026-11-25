@@ -46,7 +46,7 @@
 ## CA-09 Límite de reservas activas
 **Dado** un cliente que ya alcanzó el límite de reservas activas configurado,
 **cuando** intenta reservar una cita adicional,
-**entonces** el sistema responde 422 y no crea la nueva cita.
+**entonces** el sistema responde 409 y no crea la nueva cita.
 
 ## CA-10 Tests automatizados
 **Dado** el pipeline de CI/CD,

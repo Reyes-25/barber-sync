@@ -71,7 +71,7 @@ Lista ordenada por `id`. Respuesta 200:
 
 `GET /api/v1/barbers/{barber_id}/availability?date=2026-11-20&service_id=1`
 
-Ambos parámetros de consulta son obligatorios. Se generan comienzos cada 5 minutos, se calcula el fin según el servicio y se excluyen intervalos que intersecten citas confirmadas. Se aplica la jornada completa de 09:00 a 18:00, de lunes a sábado, como supuesto por validar.
+Ambos parámetros de consulta son obligatorios. Se generan comienzos cada 5 minutos, se calcula el fin según el servicio y se excluyen intervalos que intersecten citas confirmadas. Se aplica la jornada completa de 09:00 a 19:00, de lunes a sábado, como supuesto por validar.
 
 Respuesta 200, ejemplo de forma:
 

@@ -18,7 +18,7 @@ La guía exige comenzar por ODD y después convertir sus resultados en SDD. Esta
 |---|---|---|
 | A01 | Interfaz web sencilla para que el cliente consulte, reserve y reciba confirmación, más `/docs` para revisión técnica. | La guía no prescribe una interfaz web; esta propuesta responde a la autonomía del cliente descrita en ODD. Product debe validar las pantallas y el alcance del barbero. |
 | A02 | Python, FastAPI y SQLite para una aplicación local de alcance académico. | La libertad de lenguaje, base de datos y stack está confirmada en la guía, p. 3, punto 10. Falta ratificar esta elección con el equipo. |
-| A03 | Una barbería; horario común de lunes a sábado, de 09:00 a 18:00. | Product debe incorporarlo o corregirlo en las reglas de negocio. |
+| A03 | Una barbería; horario común de lunes a sábado, de 09:00 a 19:00. | Product debe incorporarlo o corregirlo en las reglas de negocio. |
 | A04 | Zona `America/Panama`; comienzos cada 5 minutos; duración según servicio. | Validar calendario y duración con Product y QA. |
 | A05 | Datos ficticios; teléfono panameño como clave de cliente; sin autenticación en la demo local. | No confundir identificación con autenticación. Acordar controles e interfaz antes de publicar para usuarios reales. |
 | A06 | Cancelación lógica; un segundo intento de cancelación devuelve 409. | Validar con Product y QA. |
@@ -97,7 +97,7 @@ Cancelar una cita usará también una transacción de escritura. Una futura oper
 - Entradas HTTP: ISO 8601 con desplazamiento explícito, por ejemplo `2026-11-20T10:00:00-05:00`. Se rechazan horas sin zona.
 - Comparaciones y persistencia: UTC normalizado. Respuestas de citas: horario de Panamá con `-05:00`.
 - `date` representa un día de Panamá. Su filtro se traduce a un intervalo UTC `[medianoche local, medianoche local siguiente)`.
-- Se generan comienzos cada 5 minutos desde la apertura; la cita completa debe terminar a más tardar a las 18:00. Segundos y microsegundos del inicio deben ser cero.
+- Se generan comienzos cada 5 minutos desde la apertura; la cita completa debe terminar a más tardar a las 19:00. Segundos y microsegundos del inicio deben ser cero.
 - Domingo no ofrece horarios. Para disponibilidad, una fecha pasada devuelve 422; el día actual excluye comienzos menores o iguales al reloj actual.
 - Disponibilidad filtra citas confirmadas y considera la duración solicitada. Consultarla no retiene el horario: crear una cita vuelve a comprobarlo dentro de la transacción.
 - En la base inicial no hay almuerzos, permisos ni bloqueos extraordinarios implementados.

@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from barbersync import services
+from barbersync.exceptions import ConflictError
 
 PANAMA = ZoneInfo(services.TIMEZONE)
 
@@ -301,6 +302,61 @@ def test_concurrent_double_booking(seeded_db):
 
     assert len(results) == 1, f"Expected one success, got {len(results)}"
     assert len(exceptions) == 1, f"Expected one failure, got {len(exceptions)}"
+
+    db = services.SessionLocal()
+    try:
+        confirmed = (
+            db.query(services.Appointment)
+            .filter(
+                services.Appointment.barber_id == 1,
+                services.Appointment.status == "confirmed",
+            )
+            .all()
+        )
+        assert len(confirmed) == 1
+    finally:
+        db.close()
+
+
+def test_concurrent_overlap_rejected(seeded_db):
+    monday = _next_weekday(0)
+    first_start = datetime(monday.year, monday.month, monday.day, 10, 0, tzinfo=PANAMA)
+    second_start = datetime(
+        monday.year, monday.month, monday.day, 10, 15, tzinfo=PANAMA
+    )
+    payloads = [
+        {
+            "barber_id": 1,
+            "service_id": 1,
+            "start_time": first_start,
+            "customer": {"name": "Overlap A", "phone": "7111-1111"},
+        },
+        {
+            "barber_id": 1,
+            "service_id": 1,
+            "start_time": second_start,
+            "customer": {"name": "Overlap B", "phone": "7222-2222"},
+        },
+    ]
+
+    results = []
+    exceptions = []
+
+    def attempt(payload, idx):
+        time.sleep(random.uniform(0, 0.01))
+        try:
+            appointment = services.create_appointment(payload)
+            results.append((idx, appointment))
+        except Exception as exc:  # noqa: BLE001
+            exceptions.append((idx, exc))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(attempt, p, i) for i, p in enumerate(payloads)]
+        concurrent.futures.wait(futures)
+
+    assert len(results) == 1, f"Expected one success, got {len(results)}"
+    assert len(exceptions) == 1, f"Expected one failure, got {len(exceptions)}"
+    assert isinstance(exceptions[0][1], ConflictError)
 
     db = services.SessionLocal()
     try:
