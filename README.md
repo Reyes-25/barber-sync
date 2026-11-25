@@ -49,7 +49,7 @@ La aplicación estará disponible en `http://localhost:8000`.
 pytest
 ```
 
-Resultados actuales: 21 tests passed, cobertura ≥ 80 %.
+Resultados actuales: 24 tests passed, cobertura ≥ 80 %.
 
 ## 🐳 Docker
 ```bash
