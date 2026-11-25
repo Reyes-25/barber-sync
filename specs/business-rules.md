@@ -1,6 +1,16 @@
-# Reglas de Negocio (Business Rules)
+# Reglas de Negocio — BarberSync
 
-1. **Regla de Oro (No Doble Reserva):** Un barbero no puede tener dos citas en el mismo bloque de tiempo. Si un horario está ocupado, el sistema debe rechazar la nueva reserva inmediatamente.
-2. **Horarios de Atención:** El sistema solo permite reservas de Lunes a Sábado, en horarios de 9:00 AM a 7:00 PM.
-3. **Reservas Pasadas:** No se permite agendar citas en fechas u horas anteriores al momento actual.
-4. **Límite de Reservas:** Un cliente (identificado por su número de teléfono) no puede tener más de una reserva activa en el mismo día.
+> Responsable del aporte: Product / Spec Lead (Amir Reyes) y QA / DevOps Lead (Hector Ortega).
+> Estado: alineada con el PR #5 mergeado en `main`.
+
+1. **RN-01 Jornada de atención**: la barbería atiende de lunes a sábado, de 09:00 a 19:00 (hora de Panamá). El domingo no tiene horarios disponibles.
+2. **RN-02 Duración de servicio**: cada servicio tiene una duración fija en minutos; el fin de la cita se calcula en el servidor.
+3. **RN-03 Intervalos de 5 minutos**: los horarios de inicio ofrecidos se generan cada 5 minutos y deben tener segundos/microsegundos en cero.
+4. **RN-04 Reserva futura**: solo se permite reservar citas con inicio en el futuro respecto al momento actual en `America/Panama`.
+5. **RN-05 Sin solapamiento (Regla de Oro)**: dos citas confirmadas del mismo barbero no pueden tener intervalos que se intersecten. Las citas adyacentes sí están permitidas.
+6. **RN-06 Cancelación lógica**: cancelar una cita cambia su estado a `cancelled` y libera el horario; no se elimina el registro histórico.
+7. **RN-07 Cliente único por teléfono**: el teléfono se normaliza a formato `+507XXXXXXXX`; si ya existe un cliente con ese teléfono, se reutiliza.
+8. **RN-08 Barbero activo**: solo los barberos marcados como activos pueden recibir nuevas reservas.
+9. **RN-09 Confirmación inmediata**: una reserva exitosa queda en estado `confirmed` y el sistema responde después de persistir el registro.
+10. **RN-10 Cita completa dentro de la jornada**: el inicio más la duración del servicio debe caber dentro del horario de atención del día seleccionado.
+11. **RN-11 Límite de reservas activas por cliente y día**: un cliente no puede tener más de una cita confirmada para el mismo día. El límite es configurable mediante la variable de entorno `MAX_ACTIVE_APPOINTMENTS_PER_CUSTOMER_PER_DAY`.
